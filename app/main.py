@@ -14,6 +14,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
+from . import db
 from .exporter import xuat_excel, xuat_json
 from .extractor import ExtractorError, trich_xuat_tai_lieu
 from .utils import file_sang_danh_sach_anh
@@ -41,11 +42,12 @@ def trang_thai() -> dict:
     return {
         "co_api_key": bool(os.getenv("OPENAI_API_KEY")),
         "model": os.getenv("OPENAI_MODEL", "gpt-4o"),
+        "co_database": db.co_database(),
     }
 
 
 async def _doc_mot_file(f: UploadFile) -> dict:
-    """Đọc MỘT file, trả về bản ghi {ten_file, du_lieu, loi}."""
+    """Đọc MỘT file, trả về bản ghi {ten_file, du_lieu, loi}, tự lưu DB nếu có."""
     ban_ghi: dict = {"ten_file": f.filename, "du_lieu": None, "loi": None}
     try:
         du_lieu = await f.read()
@@ -57,6 +59,16 @@ async def _doc_mot_file(f: UploadFile) -> dict:
         ban_ghi["loi"] = str(e)
     except Exception as e:  # noqa: BLE001
         ban_ghi["loi"] = f"Lỗi không xác định: {e}"
+
+    # Tự lưu vào Supabase (không chặn kết quả nếu lưu lỗi)
+    if ban_ghi["du_lieu"]:
+        try:
+            luu = db.luu_ho_so(ban_ghi)
+            if luu and luu.get("id"):
+                ban_ghi["id"] = luu["id"]
+                ban_ghi["da_luu"] = True
+        except db.DBError as e:
+            ban_ghi["canh_bao_db"] = str(e)
     return ban_ghi
 
 
@@ -102,6 +114,33 @@ async def api_xuat_json(payload: dict) -> Response:
         media_type="application/json",
         headers={"Content-Disposition": 'attachment; filename="ho_so_nhan_vien.json"'},
     )
+
+
+@app.get("/api/lich-su")
+def lich_su() -> dict:
+    """Lấy danh sách hồ sơ đã lưu trong Supabase."""
+    if not db.co_database():
+        return {"co_database": False, "ket_qua": []}
+    try:
+        rows = db.lay_lich_su()
+    except db.DBError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return {
+        "co_database": True,
+        "ket_qua": [db.ban_ghi_tu_dong_db(r) for r in rows],
+    }
+
+
+@app.delete("/api/lich-su/{ho_so_id}")
+def xoa_lich_su(ho_so_id: str) -> dict:
+    """Xoá một hồ sơ đã lưu."""
+    if not db.co_database():
+        raise HTTPException(status_code=400, detail="Chưa cấu hình database.")
+    try:
+        db.xoa_ho_so(ho_so_id)
+    except db.DBError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return {"ok": True}
 
 
 # Phục vụ file tĩnh (JS/CSS)

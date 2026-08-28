@@ -1,6 +1,8 @@
 // Trạng thái ứng dụng
 let danhSachFile = []; // File[]
-let ketQua = [];       // kết quả trích xuất trả về từ server
+let ketQua = [];       // kết quả phiên đọc hiện tại
+let lichSu = [];       // hồ sơ đã lưu (từ Supabase)
+let coDatabase = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -27,10 +29,15 @@ async function kiemTraTrangThai() {
     const r = await fetch("/api/trang-thai");
     const d = await r.json();
     const el = $("trangThai");
+    coDatabase = !!d.co_database;
+    const dbBadge = coDatabase
+      ? `<span class="badge">🗄️ Đã kết nối Supabase</span>`
+      : `<span class="badge err">🗄️ Chưa cấu hình Supabase (không lưu lịch sử)</span>`;
     if (d.co_api_key) {
-      el.innerHTML = `<span class="badge">✅ Đã cấu hình API · model: ${d.model}</span>`;
+      el.innerHTML = `<span class="badge">✅ API · ${d.model}</span> ${dbBadge}`;
     } else {
-      el.innerHTML = `<span class="badge err">⚠️ Chưa cấu hình OPENAI_API_KEY trong file .env</span>`;
+      el.innerHTML =
+        `<span class="badge err">⚠️ Chưa cấu hình OPENAI_API_KEY</span> ${dbBadge}`;
     }
   } catch (e) {
     $("trangThai").innerHTML = `<span class="badge err">Không kết nối được server</span>`;
@@ -169,12 +176,15 @@ function veMotBlock(bg) {
 }
 
 // ---------- Tải file kết quả ----------
-async function taiFile(url, tenMacDinh) {
-  if (ketQua.length === 0) return;
+async function taiFile(url, tenMacDinh, duLieu) {
+  if (!duLieu || duLieu.length === 0) {
+    alert("Không có dữ liệu để tải.");
+    return;
+  }
   const r = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ket_qua: ketQua }),
+    body: JSON.stringify({ ket_qua: duLieu }),
   });
   if (!r.ok) {
     alert("Không tải được file.");
@@ -188,6 +198,90 @@ async function taiFile(url, tenMacDinh) {
   a.click();
   a.remove();
   URL.revokeObjectURL(a.href);
+}
+
+// ---------- Tab ----------
+function chuyenTab(ten) {
+  document.querySelectorAll(".tab").forEach((t) =>
+    t.classList.toggle("active", t.dataset.tab === ten)
+  );
+  $("tabDoc").classList.toggle("hidden", ten !== "doc");
+  $("tabLichSu").classList.toggle("hidden", ten !== "lichSu");
+  if (ten === "lichSu") napLichSu();
+}
+
+// ---------- Lịch sử ----------
+async function napLichSu() {
+  const khu = $("bangLichSu");
+  if (!coDatabase) {
+    khu.innerHTML =
+      `<p class="empty">Chưa cấu hình Supabase. Thêm SUPABASE_URL và SUPABASE_SERVICE_KEY để lưu lịch sử.</p>`;
+    $("soLichSu").textContent = "0";
+    return;
+  }
+  khu.innerHTML = `<p class="empty">Đang tải…</p>`;
+  try {
+    const r = await fetch("/api/lich-su");
+    const d = await r.json();
+    lichSu = d.ket_qua || [];
+    veLichSu();
+  } catch (e) {
+    khu.innerHTML = `<p class="err-msg">Không tải được lịch sử: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function locLichSu() {
+  const tu = ($("timLichSu").value || "").trim().toLowerCase();
+  if (!tu) return lichSu;
+  return lichSu.filter((bg) => {
+    const ca = (bg.du_lieu && bg.du_lieu.thong_tin_ca_nhan) || {};
+    return [bg.ten_file, ca.ho_ten, ca.so_cccd]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(tu));
+  });
+}
+
+function veLichSu() {
+  const khu = $("bangLichSu");
+  const ds = locLichSu();
+  $("soLichSu").textContent = lichSu.length;
+  khu.innerHTML = "";
+  if (ds.length === 0) {
+    khu.innerHTML = `<p class="empty">Chưa có hồ sơ nào.</p>`;
+    return;
+  }
+  ds.forEach((bg) => {
+    const block = veMotBlock(bg);
+    // thêm thời gian + nút xoá vào tiêu đề
+    const head = block.querySelector(".doc-head");
+    if (bg.created_at) {
+      const t = new Date(bg.created_at).toLocaleString("vi-VN");
+      const span = document.createElement("span");
+      span.className = "ls-time";
+      span.textContent = t;
+      head.insertBefore(span, head.lastElementChild);
+    }
+    if (bg.id) {
+      const btn = document.createElement("button");
+      btn.className = "btn ghost mini";
+      btn.textContent = "🗑️ Xoá";
+      btn.addEventListener("click", () => xoaLichSu(bg.id));
+      head.appendChild(btn);
+    }
+    khu.appendChild(block);
+  });
+}
+
+async function xoaLichSu(id) {
+  if (!confirm("Xoá hồ sơ này khỏi lịch sử?")) return;
+  try {
+    const r = await fetch(`/api/lich-su/${id}`, { method: "DELETE" });
+    if (!r.ok) throw new Error("Lỗi máy chủ");
+    lichSu = lichSu.filter((x) => x.id !== id);
+    veLichSu();
+  } catch (e) {
+    alert("Không xoá được: " + e.message);
+  }
 }
 
 // ---------- Tiện ích ----------
@@ -217,8 +311,19 @@ function ganSuKien() {
 
   $("btnXoaHet").addEventListener("click", () => { danhSachFile = []; veDanhSach(); });
   $("btnDoc").addEventListener("click", b_atDauDoc);
-  $("btnTaiExcel").addEventListener("click", () => taiFile("/api/xuat-excel", "ho_so_nhan_vien.xlsx"));
-  $("btnTaiJson").addEventListener("click", () => taiFile("/api/xuat-json", "ho_so_nhan_vien.json"));
+  $("btnTaiExcel").addEventListener("click", () => taiFile("/api/xuat-excel", "ho_so_nhan_vien.xlsx", ketQua));
+  $("btnTaiJson").addEventListener("click", () => taiFile("/api/xuat-json", "ho_so_nhan_vien.json", ketQua));
+
+  // Tabs
+  document.querySelectorAll(".tab").forEach((t) =>
+    t.addEventListener("click", () => chuyenTab(t.dataset.tab))
+  );
+
+  // Lịch sử
+  $("btnLamMoiLS").addEventListener("click", napLichSu);
+  $("timLichSu").addEventListener("input", veLichSu);
+  $("btnLSExcel").addEventListener("click", () => taiFile("/api/xuat-excel", "lich_su_ho_so.xlsx", locLichSu()));
+  $("btnLSJson").addEventListener("click", () => taiFile("/api/xuat-json", "lich_su_ho_so.json", locLichSu()));
 }
 
 ganSuKien();

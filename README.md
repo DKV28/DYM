@@ -48,6 +48,28 @@ Mở trình duyệt: http://localhost:8000
 2. Bấm **🔍 Bắt đầu đọc** — chờ ChatGPT xử lý.
 3. Xem kết quả từng tài liệu, rồi bấm **Tải Excel** hoặc **Tải JSON**.
 
+## 🗄️ Lưu lịch sử với Supabase
+
+App tự động **lưu mỗi hồ sơ đã đọc** vào Supabase và có tab **Lịch sử** để xem lại,
+tìm kiếm, xoá, và xuất Excel/JSON. Nếu không cấu hình, app vẫn chạy bình thường
+(chỉ không lưu lịch sử).
+
+**Thiết lập:**
+
+1. Tạo project tại https://supabase.com (miễn phí).
+2. Vào **SQL Editor → New query**, dán nội dung file [`supabase/schema.sql`](supabase/schema.sql) và bấm **Run** để tạo bảng.
+3. Vào **Project Settings → API**, lấy:
+   - **Project URL** → `SUPABASE_URL`
+   - **service_role key** (mục *Project API keys*) → `SUPABASE_SERVICE_KEY`
+4. Điền vào `.env` (chạy local) hoặc **Environment Variables** trên Vercel.
+
+> ⚠️ **Bảo mật:** `service_role` key có toàn quyền, chỉ dùng phía server (backend).
+> App không bao giờ gửi key này ra trình duyệt. Bảng đã bật RLS nên `anon` key
+> không truy cập được dữ liệu.
+
+**Dữ liệu lưu:** thông tin cá nhân, học vấn, chứng chỉ, tên file, thời gian —
+*không lưu file scan gốc*.
+
 ## 🚀 Deploy lên Vercel
 
 App đã cấu hình sẵn để chạy trên Vercel (serverless Python).
@@ -61,6 +83,7 @@ App đã cấu hình sẵn để chạy trên Vercel (serverless Python).
    - `OPENAI_API_KEY` = key của bạn *(bắt buộc)*
    - `OPENAI_MODEL` = `gpt-4o` *(tuỳ chọn)*
    - `MAX_PDF_PAGES` = `10` *(tuỳ chọn)*
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` = nếu dùng lịch sử *(tuỳ chọn)*
 5. Bấm **Redeploy** để nạp biến môi trường.
 
 > **Quan trọng về giới hạn thời gian (timeout):**
@@ -87,6 +110,9 @@ vercel --prod     # deploy production
 | `OPENAI_API_KEY` | API key OpenAI (bắt buộc) | — |
 | `OPENAI_MODEL` | Model vision dùng để đọc | `gpt-4o` |
 | `MAX_PDF_PAGES` | Số trang PDF tối đa mỗi file | `10` |
+| `SUPABASE_URL` | URL project Supabase (tuỳ chọn) | — |
+| `SUPABASE_SERVICE_KEY` | service_role key (tuỳ chọn) | — |
+| `SUPABASE_TABLE` | Tên bảng | `ho_so_nhan_vien` |
 
 ## Cấu trúc dự án
 
@@ -99,6 +125,9 @@ app/
   schema.py     # Định nghĩa trường dữ liệu + nhãn tiếng Việt
   utils.py      # Chuyển PDF/ảnh → ảnh base64
   exporter.py   # Xuất Excel + JSON
+  db.py         # Lưu/đọc lịch sử qua Supabase
+supabase/
+  schema.sql    # SQL tạo bảng lịch sử
 static/
   index.html    # Giao diện
   style.css

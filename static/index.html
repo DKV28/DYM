@@ -13,7 +13,13 @@
     <div id="trangThai" class="trang-thai"></div>
   </header>
 
+  <nav class="tabs">
+    <button class="tab active" data-tab="doc">📤 Đọc tài liệu</button>
+    <button class="tab" data-tab="lichSu">🗂️ Lịch sử</button>
+  </nav>
+
   <main>
+   <div id="tabDoc" class="tab-panel">
     <!-- Khu vực upload -->
     <section id="khuUpload" class="card dropzone" tabindex="0">
       <input type="file" id="inputFile" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tiff,.tif" hidden />
@@ -53,6 +59,22 @@
       </div>
       <div id="bangKetQua"></div>
     </section>
+   </div><!-- /tabDoc -->
+
+   <div id="tabLichSu" class="tab-panel hidden">
+    <section class="card">
+      <div class="row-between">
+        <h2>Hồ sơ đã lưu (<span id="soLichSu">0</span>)</h2>
+        <div>
+          <button id="btnLamMoiLS" class="btn ghost">↻ Làm mới</button>
+          <button id="btnLSExcel" class="btn primary">⬇️ Tải Excel</button>
+          <button id="btnLSJson" class="btn ghost">⬇️ Tải JSON</button>
+        </div>
+      </div>
+      <input type="search" id="timLichSu" class="search" placeholder="🔍 Tìm theo họ tên / số CCCD / tên file…" />
+      <div id="bangLichSu"></div>
+    </section>
+   </div><!-- /tabLichSu -->
   </main>
 
   <footer class="foot">
