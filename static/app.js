@@ -37,7 +37,7 @@ async function kiemTraTrangThai() {
       el.innerHTML = `<span class="badge">✅ API · ${d.model}</span> ${dbBadge}`;
     } else {
       el.innerHTML =
-        `<span class="badge err">⚠️ Chưa cấu hình OPENAI_API_KEY</span> ${dbBadge}`;
+        `<span class="badge err">⚠️ Chưa cấu hình GEMINI_API_KEY</span> ${dbBadge}`;
     }
   } catch (e) {
     $("trangThai").innerHTML = `<span class="badge err">Không kết nối được server</span>`;
@@ -98,7 +98,7 @@ async function b_atDauDoc() {
   for (let i = 0; i < tong; i++) {
     const f = danhSachFile[i];
     $("tienTrinhText").textContent =
-      `Đang đọc bằng ChatGPT… (${i + 1}/${tong}): ${f.name}`;
+      `Đang đọc bằng Gemini… (${i + 1}/${tong}): ${f.name}`;
 
     const fd = new FormData();
     fd.append("file", f);

@@ -1,12 +1,12 @@
 # 📄 App đọc hồ sơ nhân viên (bằng cấp / CV / chứng chỉ hành nghề)
 
-Web app trích xuất thông tin từ **file scan** (PDF/ảnh) của nhân viên bằng **ChatGPT API** (model vision).
+Web app trích xuất thông tin từ **file scan** (PDF/ảnh) của nhân viên bằng **Google Gemini API** (có bậc miễn phí).
 Kết quả xem trực tiếp trên web và tải về dưới dạng **Excel** hoặc **JSON**.
 
 ## Tính năng
 
 - Upload **nhiều file cùng lúc** (kéo–thả), hỗ trợ **PDF scan** và **ảnh JPG/PNG/…**
-- Tự động chuyển PDF thành ảnh và gửi cho ChatGPT đọc
+- Tự động chuyển PDF thành ảnh và gửi cho Gemini đọc
 - Trích xuất:
   - **Thông tin cá nhân**: họ tên, ngày sinh, giới tính, số CCCD, quê quán, email, SĐT
   - **Học vấn / bằng cấp**: trường, chuyên ngành, bậc đào tạo, xếp loại, năm tốt nghiệp, hình thức
@@ -17,7 +17,7 @@ Kết quả xem trực tiếp trên web và tải về dưới dạng **Excel** 
 ## Yêu cầu
 
 - Python 3.10+
-- Một API key OpenAI: https://platform.openai.com/api-keys
+- Một API key Google Gemini (MIỄN PHÍ, không cần thẻ): https://aistudio.google.com/apikey
 
 ## Cài đặt
 
@@ -31,7 +31,7 @@ pip install -r requirements.txt
 
 # 3. Cấu hình API key
 cp .env.example .env
-# Mở file .env và điền OPENAI_API_KEY của bạn
+# Mở file .env và điền GEMINI_API_KEY của bạn
 ```
 
 ## Chạy app
@@ -45,7 +45,7 @@ Mở trình duyệt: http://localhost:8000
 ## Cách dùng
 
 1. Kéo–thả (hoặc chọn) các file bằng cấp / CV / chứng chỉ.
-2. Bấm **🔍 Bắt đầu đọc** — chờ ChatGPT xử lý.
+2. Bấm **🔍 Bắt đầu đọc** — chờ Gemini xử lý.
 3. Xem kết quả từng tài liệu, rồi bấm **Tải Excel** hoặc **Tải JSON**.
 
 ## 🗄️ Lưu lịch sử với Supabase
@@ -80,14 +80,14 @@ App đã cấu hình sẵn để chạy trên Vercel (serverless Python).
 2. Vào https://vercel.com → **Add New… → Project** → chọn repo này.
 3. Vercel tự nhận diện (`vercel.json` + `api/index.py`). Bấm **Deploy**.
 4. Vào **Settings → Environment Variables**, thêm:
-   - `OPENAI_API_KEY` = key của bạn *(bắt buộc)*
-   - `OPENAI_MODEL` = `gpt-4o` *(tuỳ chọn)*
+   - `GEMINI_API_KEY` = key của bạn *(bắt buộc)*
+   - `GEMINI_MODEL` = `gemini-2.5-flash` *(tuỳ chọn)*
    - `MAX_PDF_PAGES` = `10` *(tuỳ chọn)*
    - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` = nếu dùng lịch sử *(tuỳ chọn)*
 5. Bấm **Redeploy** để nạp biến môi trường.
 
 > **Quan trọng về giới hạn thời gian (timeout):**
-> Vercel giới hạn thời gian mỗi request. Vì ChatGPT đọc ảnh khá lâu, app được
+> Vercel giới hạn thời gian mỗi request. Vì Gemini đọc ảnh khá lâu, app được
 > thiết kế để **xử lý từng file một** (frontend gọi API lần lượt) nên mỗi request
 > chỉ đọc 1 tài liệu → an toàn hơn nhiều.
 > - **Hobby (miễn phí):** tối đa **60 giây/request**. Đủ cho hầu hết 1 tài liệu,
@@ -107,8 +107,8 @@ vercel --prod     # deploy production
 
 | Biến | Ý nghĩa | Mặc định |
 |------|---------|----------|
-| `OPENAI_API_KEY` | API key OpenAI (bắt buộc) | — |
-| `OPENAI_MODEL` | Model vision dùng để đọc | `gpt-4o` |
+| `GEMINI_API_KEY` | API key Google Gemini (bắt buộc) | — |
+| `GEMINI_MODEL` | Model dùng để đọc | `gemini-2.5-flash` |
 | `MAX_PDF_PAGES` | Số trang PDF tối đa mỗi file | `10` |
 | `SUPABASE_URL` | URL project Supabase (tuỳ chọn) | — |
 | `SUPABASE_SERVICE_KEY` | service_role key (tuỳ chọn) | — |
@@ -121,7 +121,7 @@ api/
   index.py      # Điểm vào cho Vercel (ASGI)
 app/
   main.py       # FastAPI: các API endpoint + phục vụ web
-  extractor.py  # Gọi ChatGPT vision, ép JSON theo schema
+  extractor.py  # Gọi Gemini vision, ép JSON theo schema
   schema.py     # Định nghĩa trường dữ liệu + nhãn tiếng Việt
   utils.py      # Chuyển PDF/ảnh → ảnh base64
   exporter.py   # Xuất Excel + JSON
@@ -135,9 +135,16 @@ static/
 vercel.json     # Cấu hình deploy Vercel
 ```
 
-## Lưu ý bảo mật
+## Lưu ý về API key & chi phí
 
-- API key chỉ nằm trong file `.env` phía server, **không lộ ra trình duyệt**.
+- Lấy key **miễn phí** tại https://aistudio.google.com/apikey (đăng nhập Google, không cần thẻ).
+- Bậc free của `gemini-2.5-flash`: ~10 lần/phút, ~250 lần/ngày. `gemini-2.5-flash-lite`: ~1000 lần/ngày.
+- Nếu cần đọc nhiều hơn: bật thanh toán trong Google AI Studio để lên bậc trả phí (giá rất rẻ).
+
+## Lưu ý bảo mật ⚠️
+
+- API key chỉ nằm trong file `.env` / biến môi trường phía server, **không lộ ra trình duyệt**.
 - File upload **không lưu** trên server, chỉ xử lý trong bộ nhớ.
-- Nội dung tài liệu được gửi tới OpenAI để đọc — cân nhắc với dữ liệu nhạy cảm.
-```
+- **Quan trọng:** ở **bậc miễn phí**, Google **có thể dùng dữ liệu bạn gửi để cải thiện model**.
+  Hồ sơ nhân viên chứa dữ liệu cá nhân (CCCD…) → với dữ liệu thật/nhạy cảm, nên **bật bậc trả phí**
+  (Google cam kết KHÔNG dùng dữ liệu của bậc trả phí để huấn luyện), hoặc chỉ dùng free để thử nghiệm.

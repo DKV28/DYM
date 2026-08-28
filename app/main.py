@@ -40,8 +40,8 @@ def trang_chu() -> HTMLResponse:
 def trang_thai() -> dict:
     """Cho frontend biết đã cấu hình API key hay chưa."""
     return {
-        "co_api_key": bool(os.getenv("OPENAI_API_KEY")),
-        "model": os.getenv("OPENAI_MODEL", "gpt-4o"),
+        "co_api_key": bool(os.getenv("GEMINI_API_KEY")),
+        "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
         "co_database": db.co_database(),
     }
 

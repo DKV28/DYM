@@ -1,13 +1,13 @@
 """Định nghĩa cấu trúc dữ liệu cần trích xuất từ tài liệu nhân viên.
 
 Cấu trúc này được dùng cho:
-- Prompt gửi cho ChatGPT (mô tả các trường cần đọc)
-- JSON Schema ép model trả về đúng định dạng (response_format)
+- Prompt gửi cho model (mô tả các trường cần đọc)
+- JSON Schema ép model trả về đúng định dạng (chuyển sang responseSchema của Gemini)
 - Xuất Excel (tên cột tiếng Việt)
 """
 
 # JSON Schema mô tả kết quả trích xuất cho một tài liệu.
-# Dùng với OpenAI structured outputs để đảm bảo model trả về đúng khuôn.
+# extractor.py sẽ chuyển schema này sang định dạng responseSchema của Gemini.
 EXTRACTION_JSON_SCHEMA = {
     "name": "ho_so_nhan_vien",
     "strict": True,
