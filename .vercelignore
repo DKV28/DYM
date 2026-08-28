@@ -1,0 +1,9 @@
+.venv
+venv
+env
+__pycache__
+uploads
+outputs
+.env
+*.xlsx
+*.pyc

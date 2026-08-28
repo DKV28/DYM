@@ -48,6 +48,38 @@ Mở trình duyệt: http://localhost:8000
 2. Bấm **🔍 Bắt đầu đọc** — chờ ChatGPT xử lý.
 3. Xem kết quả từng tài liệu, rồi bấm **Tải Excel** hoặc **Tải JSON**.
 
+## 🚀 Deploy lên Vercel
+
+App đã cấu hình sẵn để chạy trên Vercel (serverless Python).
+
+**Các bước:**
+
+1. Push code lên GitHub (đã xong nếu bạn thấy repo này).
+2. Vào https://vercel.com → **Add New… → Project** → chọn repo này.
+3. Vercel tự nhận diện (`vercel.json` + `api/index.py`). Bấm **Deploy**.
+4. Vào **Settings → Environment Variables**, thêm:
+   - `OPENAI_API_KEY` = key của bạn *(bắt buộc)*
+   - `OPENAI_MODEL` = `gpt-4o` *(tuỳ chọn)*
+   - `MAX_PDF_PAGES` = `10` *(tuỳ chọn)*
+5. Bấm **Redeploy** để nạp biến môi trường.
+
+> **Quan trọng về giới hạn thời gian (timeout):**
+> Vercel giới hạn thời gian mỗi request. Vì ChatGPT đọc ảnh khá lâu, app được
+> thiết kế để **xử lý từng file một** (frontend gọi API lần lượt) nên mỗi request
+> chỉ đọc 1 tài liệu → an toàn hơn nhiều.
+> - **Hobby (miễn phí):** tối đa **60 giây/request**. Đủ cho hầu hết 1 tài liệu,
+>   nhưng PDF nhiều trang có thể vẫn quá lâu.
+> - **Pro:** có thể nâng `maxDuration` trong `vercel.json` lên tới **300 giây**.
+>
+> Nếu gặp timeout với file nhiều trang, hãy giảm `MAX_PDF_PAGES`, hoặc cắt bớt trang.
+
+**Deploy bằng CLI (tuỳ chọn):**
+```bash
+npm i -g vercel
+vercel            # deploy preview
+vercel --prod     # deploy production
+```
+
 ## Cấu hình (file `.env`)
 
 | Biến | Ý nghĩa | Mặc định |
@@ -59,6 +91,8 @@ Mở trình duyệt: http://localhost:8000
 ## Cấu trúc dự án
 
 ```
+api/
+  index.py      # Điểm vào cho Vercel (ASGI)
 app/
   main.py       # FastAPI: các API endpoint + phục vụ web
   extractor.py  # Gọi ChatGPT vision, ép JSON theo schema
@@ -69,6 +103,7 @@ static/
   index.html    # Giao diện
   style.css
   app.js
+vercel.json     # Cấu hình deploy Vercel
 ```
 
 ## Lưu ý bảo mật

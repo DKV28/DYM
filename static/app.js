@@ -76,33 +76,43 @@ function veDanhSach() {
   $("btnDoc").disabled = danhSachFile.length === 0;
 }
 
-// ---------- Gọi API đọc ----------
+// ---------- Gọi API đọc (từng file một — hợp với serverless/Vercel) ----------
 async function b_atDauDoc() {
   if (danhSachFile.length === 0) return;
   $("khuTienTrinh").classList.remove("hidden");
-  $("khuKetQua").classList.add("hidden");
   $("btnDoc").disabled = true;
-  $("tienTrinhText").textContent =
-    `Đang đọc ${danhSachFile.length} tài liệu bằng ChatGPT… (có thể mất vài chục giây)`;
 
-  const fd = new FormData();
-  for (const f of danhSachFile) fd.append("files", f);
+  // Chuẩn bị khu kết quả (xoá cũ, hiện ra để append dần)
+  ketQua = [];
+  $("bangKetQua").innerHTML = "";
+  $("khuKetQua").classList.remove("hidden");
 
-  try {
-    const r = await fetch("/api/trich-xuat", { method: "POST", body: fd });
-    if (!r.ok) {
-      const err = await r.json().catch(() => ({}));
-      throw new Error(err.detail || `Lỗi ${r.status}`);
+  const tong = danhSachFile.length;
+  for (let i = 0; i < tong; i++) {
+    const f = danhSachFile[i];
+    $("tienTrinhText").textContent =
+      `Đang đọc bằng ChatGPT… (${i + 1}/${tong}): ${f.name}`;
+
+    const fd = new FormData();
+    fd.append("file", f);
+
+    let bg;
+    try {
+      const r = await fetch("/api/trich-xuat-mot", { method: "POST", body: fd });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.detail || `Lỗi ${r.status}`);
+      }
+      bg = await r.json();
+    } catch (e) {
+      bg = { ten_file: f.name, du_lieu: null, loi: "Lỗi khi gọi máy chủ: " + e.message };
     }
-    const d = await r.json();
-    ketQua = d.ket_qua || [];
-    veKetQua();
-  } catch (e) {
-    alert("Có lỗi khi đọc tài liệu: " + e.message);
-  } finally {
-    $("khuTienTrinh").classList.add("hidden");
-    $("btnDoc").disabled = false;
+    ketQua.push(bg);
+    $("bangKetQua").appendChild(veMotBlock(bg)); // hiện ngay từng kết quả
   }
+
+  $("khuTienTrinh").classList.add("hidden");
+  $("btnDoc").disabled = false;
 }
 
 // ---------- Hiển thị kết quả ----------
@@ -126,43 +136,36 @@ function veBangMang(nhan, arr) {
   return `<table class="mini"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
 }
 
-function veKetQua() {
-  const khu = $("bangKetQua");
-  khu.innerHTML = "";
-  if (ketQua.length === 0) {
-    khu.innerHTML = `<p class="empty">Không có kết quả.</p>`;
+// Tạo 1 block hiển thị cho một bản ghi kết quả
+function veMotBlock(bg) {
+  const block = document.createElement("div");
+  block.className = "doc-block";
+  const d = bg.du_lieu;
+  if (bg.loi || !d) {
+    block.innerHTML = `
+      <div class="doc-head">
+        <span>${escapeHtml(bg.ten_file)}</span>
+        <span class="tag err">Lỗi</span>
+      </div>
+      <div class="doc-body"><p class="err-msg">${escapeHtml(bg.loi || "Không có dữ liệu.")}</p></div>`;
+  } else {
+    const loai = NHAN_LOAI[d.loai_tai_lieu] || d.loai_tai_lieu || "Khác";
+    block.innerHTML = `
+      <div class="doc-head">
+        <span>${escapeHtml(bg.ten_file)}</span>
+        <span class="tag">${loai}</span>
+      </div>
+      <div class="doc-body">
+        <div class="subh">Thông tin cá nhân</div>
+        ${veBangDoiTuong(NHAN_CA_NHAN, d.thong_tin_ca_nhan)}
+        <div class="subh">Học vấn / bằng cấp</div>
+        ${veBangMang(NHAN_HOC_VAN, d.hoc_van)}
+        <div class="subh">Chứng chỉ hành nghề</div>
+        ${veBangMang(NHAN_CHUNG_CHI, d.chung_chi)}
+        ${d.ghi_chu ? `<div class="subh">Ghi chú</div><p>${escapeHtml(d.ghi_chu)}</p>` : ""}
+      </div>`;
   }
-  ketQua.forEach((bg) => {
-    const block = document.createElement("div");
-    block.className = "doc-block";
-    const d = bg.du_lieu;
-    if (bg.loi) {
-      block.innerHTML = `
-        <div class="doc-head">
-          <span>${escapeHtml(bg.ten_file)}</span>
-          <span class="tag err">Lỗi</span>
-        </div>
-        <div class="doc-body"><p class="err-msg">${escapeHtml(bg.loi)}</p></div>`;
-    } else {
-      const loai = NHAN_LOAI[d.loai_tai_lieu] || d.loai_tai_lieu || "Khác";
-      block.innerHTML = `
-        <div class="doc-head">
-          <span>${escapeHtml(bg.ten_file)}</span>
-          <span class="tag">${loai}</span>
-        </div>
-        <div class="doc-body">
-          <div class="subh">Thông tin cá nhân</div>
-          ${veBangDoiTuong(NHAN_CA_NHAN, d.thong_tin_ca_nhan)}
-          <div class="subh">Học vấn / bằng cấp</div>
-          ${veBangMang(NHAN_HOC_VAN, d.hoc_van)}
-          <div class="subh">Chứng chỉ hành nghề</div>
-          ${veBangMang(NHAN_CHUNG_CHI, d.chung_chi)}
-          ${d.ghi_chu ? `<div class="subh">Ghi chú</div><p>${escapeHtml(d.ghi_chu)}</p>` : ""}
-        </div>`;
-    }
-    khu.appendChild(block);
-  });
-  $("khuKetQua").classList.remove("hidden");
+  return block;
 }
 
 // ---------- Tải file kết quả ----------

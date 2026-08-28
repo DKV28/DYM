@@ -44,27 +44,37 @@ def trang_thai() -> dict:
     }
 
 
+async def _doc_mot_file(f: UploadFile) -> dict:
+    """Đọc MỘT file, trả về bản ghi {ten_file, du_lieu, loi}."""
+    ban_ghi: dict = {"ten_file": f.filename, "du_lieu": None, "loi": None}
+    try:
+        du_lieu = await f.read()
+        if len(du_lieu) > MAX_FILE_BYTES:
+            raise ValueError("File vượt quá 20 MB.")
+        anh = file_sang_danh_sach_anh(f.filename, du_lieu, MAX_PDF_PAGES)
+        ban_ghi["du_lieu"] = trich_xuat_tai_lieu(anh)
+    except (ValueError, ExtractorError) as e:
+        ban_ghi["loi"] = str(e)
+    except Exception as e:  # noqa: BLE001
+        ban_ghi["loi"] = f"Lỗi không xác định: {e}"
+    return ban_ghi
+
+
+@app.post("/api/trich-xuat-mot")
+async def trich_xuat_mot(file: UploadFile = File(...)) -> dict:
+    """Đọc MỘT file — dùng cho môi trường serverless (Vercel) để tránh timeout.
+
+    Frontend gọi endpoint này lần lượt cho từng file và hiện tiến trình.
+    """
+    return await _doc_mot_file(file)
+
+
 @app.post("/api/trich-xuat")
 async def trich_xuat(files: list[UploadFile] = File(...)) -> dict:
-    """Đọc từng file, trả về danh sách kết quả."""
+    """Đọc nhiều file trong một request (tiện khi chạy local, không giới hạn thời gian)."""
     if not files:
         raise HTTPException(status_code=400, detail="Chưa chọn file nào.")
-
-    ket_qua: list[dict] = []
-    for f in files:
-        ban_ghi: dict = {"ten_file": f.filename, "du_lieu": None, "loi": None}
-        try:
-            du_lieu = await f.read()
-            if len(du_lieu) > MAX_FILE_BYTES:
-                raise ValueError("File vượt quá 20 MB.")
-            anh = file_sang_danh_sach_anh(f.filename, du_lieu, MAX_PDF_PAGES)
-            ban_ghi["du_lieu"] = trich_xuat_tai_lieu(anh)
-        except (ValueError, ExtractorError) as e:
-            ban_ghi["loi"] = str(e)
-        except Exception as e:  # noqa: BLE001
-            ban_ghi["loi"] = f"Lỗi không xác định: {e}"
-        ket_qua.append(ban_ghi)
-
+    ket_qua = [await _doc_mot_file(f) for f in files]
     return {"ket_qua": ket_qua}
 
 
