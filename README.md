@@ -8,7 +8,7 @@ Kết quả xem trực tiếp trên web và tải về dưới dạng **Excel** 
 - Upload **nhiều file cùng lúc** (kéo–thả), hỗ trợ **PDF scan** và **ảnh JPG/PNG/…**
 - Tự động chuyển PDF thành ảnh và gửi cho Gemini đọc
 - Trích xuất:
-  - **Thông tin cá nhân**: họ tên, ngày sinh, giới tính, số CCCD, quê quán, email, SĐT
+  - **Thông tin cá nhân**: họ tên, ngày sinh, giới tính, số CCCD, **ngày cấp CCCD** (đọc từ mặt sau thẻ), quê quán, email, SĐT
   - **Học vấn / bằng cấp**: trường, chuyên ngành, bậc đào tạo, xếp loại, năm tốt nghiệp, hình thức
   - **Chứng chỉ hành nghề**: tên, số hiệu, nơi cấp, ngày cấp, ngày hết hạn, lĩnh vực
 - Xuất **Excel** (3 sheet: Tổng hợp, Học vấn, Chứng chỉ) và **JSON**
@@ -81,7 +81,7 @@ App đã cấu hình sẵn để chạy trên Vercel (serverless Python).
 3. Vercel tự nhận diện (`vercel.json` + `api/index.py`). Bấm **Deploy**.
 4. Vào **Settings → Environment Variables**, thêm:
    - `GEMINI_API_KEY` = key của bạn *(bắt buộc)*
-   - `GEMINI_MODEL` = `gemini-2.5-flash` *(tuỳ chọn)*
+   - `GEMINI_MODEL` = `gemini-3.5-flash-lite` *(tuỳ chọn)*
    - `MAX_PDF_PAGES` = `10` *(tuỳ chọn)*
    - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` = nếu dùng lịch sử *(tuỳ chọn)*
 5. Bấm **Redeploy** để nạp biến môi trường.
@@ -108,7 +108,7 @@ vercel --prod     # deploy production
 | Biến | Ý nghĩa | Mặc định |
 |------|---------|----------|
 | `GEMINI_API_KEY` | API key Google Gemini (bắt buộc) | — |
-| `GEMINI_MODEL` | Model dùng để đọc | `gemini-2.5-flash` |
+| `GEMINI_MODEL` | Model dùng để đọc | `gemini-3.5-flash-lite` |
 | `MAX_PDF_PAGES` | Số trang PDF tối đa mỗi file | `10` |
 | `SUPABASE_URL` | URL project Supabase (tuỳ chọn) | — |
 | `SUPABASE_SERVICE_KEY` | service_role key (tuỳ chọn) | — |
@@ -138,7 +138,7 @@ vercel.json     # Cấu hình deploy Vercel
 ## Lưu ý về API key & chi phí
 
 - Lấy key **miễn phí** tại https://aistudio.google.com/apikey (đăng nhập Google, không cần thẻ).
-- Bậc free của `gemini-2.5-flash`: ~10 lần/phút, ~250 lần/ngày. `gemini-2.5-flash-lite`: ~1000 lần/ngày.
+- `gemini-3.5-flash-lite` có bậc **miễn phí** với hạn mức ~1000 lần/ngày (đủ cho dùng nhỏ/thử nghiệm).
 - Nếu cần đọc nhiều hơn: bật thanh toán trong Google AI Studio để lên bậc trả phí (giá rất rẻ).
 
 ## Lưu ý bảo mật ⚠️

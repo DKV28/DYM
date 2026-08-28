@@ -8,7 +8,8 @@ const $ = (id) => document.getElementById(id);
 
 const NHAN_CA_NHAN = {
   ho_ten: "Họ tên", ngay_sinh: "Ngày sinh", gioi_tinh: "Giới tính",
-  so_cccd: "Số CCCD/CMND", que_quan: "Quê quán", email: "Email", so_dien_thoai: "Số điện thoại",
+  so_cccd: "Số CCCD/CMND", ngay_cap_cccd: "Ngày cấp CCCD", que_quan: "Quê quán",
+  email: "Email", so_dien_thoai: "Số điện thoại",
 };
 const NHAN_HOC_VAN = {
   truong: "Trường", chuyen_nganh: "Chuyên ngành", bac_dao_tao: "Bậc đào tạo",

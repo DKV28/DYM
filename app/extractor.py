@@ -22,6 +22,13 @@ Nguyên tắc:
 - Nhiều trang có thể thuộc cùng một người: gộp lại thành một kết quả.
 - Với bằng cấp, mỗi bằng là một phần tử trong 'hoc_van'.
 - Với chứng chỉ hành nghề, mỗi chứng chỉ là một phần tử trong 'chung_chi'.
+
+Về thẻ CCCD/CMND:
+- MẶT SAU thẻ CCCD có dòng 'Ngày, tháng, năm / Date of issue' — đó là NGÀY CẤP CCCD,
+  ghi vào trường 'ngay_cap_cccd' (dd/mm/yyyy). Chỉ lấy ngày cấp từ thẻ CCCD/CMND.
+- KHÔNG nhầm ngày cấp CCCD với ngày cấp của bằng cấp/chứng chỉ.
+- Nếu ảnh chỉ là mặt sau CCCD (không có thông tin khác), chỉ cần điền 'so_cccd'
+  (nếu thấy) và 'ngay_cap_cccd'; các trường khác để trống.
 """
 
 API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -81,7 +88,7 @@ def trich_xuat_tai_lieu(danh_sach_anh: list[str]) -> dict:
             "Chưa cấu hình GEMINI_API_KEY. Lấy key miễn phí tại "
             "https://aistudio.google.com/apikey rồi thêm vào .env."
         )
-    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
     parts: list[dict] = [
         {

@@ -31,6 +31,14 @@ EXTRACTION_JSON_SCHEMA = {
                     "ngay_sinh": {"type": "string", "description": "Định dạng dd/mm/yyyy nếu có."},
                     "gioi_tinh": {"type": "string"},
                     "so_cccd": {"type": "string", "description": "Số CCCD/CMND/hộ chiếu."},
+                    "ngay_cap_cccd": {
+                        "type": "string",
+                        "description": (
+                            "Ngày cấp CCCD/CMND (dd/mm/yyyy). Nằm ở MẶT SAU thẻ CCCD, "
+                            "thường ghi 'Ngày, tháng, năm / Date of issue'. Chỉ lấy từ thẻ "
+                            "CCCD/CMND, KHÔNG lấy ngày cấp của bằng cấp hay chứng chỉ."
+                        ),
+                    },
                     "que_quan": {"type": "string"},
                     "email": {"type": "string"},
                     "so_dien_thoai": {"type": "string"},
@@ -40,6 +48,7 @@ EXTRACTION_JSON_SCHEMA = {
                     "ngay_sinh",
                     "gioi_tinh",
                     "so_cccd",
+                    "ngay_cap_cccd",
                     "que_quan",
                     "email",
                     "so_dien_thoai",
@@ -123,6 +132,7 @@ NHAN_CA_NHAN = {
     "ngay_sinh": "Ngày sinh",
     "gioi_tinh": "Giới tính",
     "so_cccd": "Số CCCD/CMND",
+    "ngay_cap_cccd": "Ngày cấp CCCD",
     "que_quan": "Quê quán",
     "email": "Email",
     "so_dien_thoai": "Số điện thoại",

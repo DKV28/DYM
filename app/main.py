@@ -41,7 +41,7 @@ def trang_thai() -> dict:
     """Cho frontend biết đã cấu hình API key hay chưa."""
     return {
         "co_api_key": bool(os.getenv("GEMINI_API_KEY")),
-        "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        "model": os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
         "co_database": db.co_database(),
     }
 
