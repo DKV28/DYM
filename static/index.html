@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đọc hồ sơ nhân viên</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>📄 Đọc hồ sơ nhân viên</h1>
+    <p class="sub">Trích xuất bằng cấp · CV · chứng chỉ hành nghề bằng ChatGPT</p>
+    <div id="trangThai" class="trang-thai"></div>
+  </header>
+
+  <main>
+    <!-- Khu vực upload -->
+    <section id="khuUpload" class="card dropzone" tabindex="0">
+      <input type="file" id="inputFile" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tiff,.tif" hidden />
+      <div class="dz-inner">
+        <div class="dz-icon">⬆️</div>
+        <p><strong>Kéo &amp; thả</strong> file vào đây hoặc <button type="button" id="btnChon" class="link">chọn file</button></p>
+        <p class="hint">Hỗ trợ PDF scan và ảnh JPG/PNG · nhiều file cùng lúc</p>
+      </div>
+    </section>
+
+    <!-- Danh sách file đã chọn -->
+    <section id="khuDanhSach" class="card hidden">
+      <div class="row-between">
+        <h2>File đã chọn (<span id="soFile">0</span>)</h2>
+        <div>
+          <button id="btnXoaHet" class="btn ghost">Xoá hết</button>
+          <button id="btnDoc" class="btn primary">🔍 Bắt đầu đọc</button>
+        </div>
+      </div>
+      <ul id="danhSachFile" class="file-list"></ul>
+    </section>
+
+    <!-- Tiến trình -->
+    <section id="khuTienTrinh" class="card hidden">
+      <div class="spinner"></div>
+      <p id="tienTrinhText">Đang đọc tài liệu bằng ChatGPT…</p>
+    </section>
+
+    <!-- Kết quả -->
+    <section id="khuKetQua" class="card hidden">
+      <div class="row-between">
+        <h2>Kết quả trích xuất</h2>
+        <div>
+          <button id="btnTaiExcel" class="btn primary">⬇️ Tải Excel</button>
+          <button id="btnTaiJson" class="btn ghost">⬇️ Tải JSON</button>
+        </div>
+      </div>
+      <div id="bangKetQua"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Dữ liệu được gửi tới OpenAI để đọc. Không lưu file trên server.</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
